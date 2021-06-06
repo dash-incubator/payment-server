@@ -1,0 +1,101 @@
+networks:
+    application:
+        driver: bridge
+    rpc:
+        driver: bridge
+
+services:
+    dashd:
+        command: /usr/local/bin/dashd -conf=/dash/.dashcore/dash.conf
+        image: dashpay/dashd:0.17.0.0-rc4-hotfix2
+        networks:
+            - rpc
+        ports:
+            # Leave JSONRPC ports exposed for ELB health check
+            # (security groups protect these)
+            - 9998:9998
+            - 19998:9998
+            - 9999:9999
+            - 19999:9999
+            - 127.0.0.1:29998:29998
+        restart: always
+        user: "0"
+        volumes:
+            - dash:/dash
+            - ./dash.conf:/dash/.dashcore/dash.conf:ro
+
+    nginx:
+        build:
+            args:
+                DOMAIN: ${DOMAIN}
+                NODE_CONTAINER: node-web
+                NODE_PORT: ${NODE_PORT}
+                PUBLIC_DIRECTORY: ${PUBLIC_DIRECTORY}
+            context: ./nginx
+        depends_on:
+            - node-web
+        networks:
+            - application
+        ports:
+            - 80:80
+            - 443:443
+        restart: unless-stopped
+        volumes:
+            - ./nginx/certs:/etc/nginx/certs:ro
+            - ./node/public:/var/www/public
+
+    node-web:
+        build:
+            args:
+                PRODUCTION: ${PRODUCTION}
+                ROOT_DIRECTORY: ${ROOT_DIRECTORY}
+            context: ./node
+        command: node web.js
+        environment:
+            - DASH_CONTRACT_ID
+            - DASH_IDENTITY
+            - DASH_MNEMONIC
+            - DOMAIN
+            - NODE_PORT
+            - REDIS_PASSWORD
+            - REDIS_SOCKET 
+        restart: unless-stopped
+        ports:
+            - 8080:8080
+        networks:
+            - application
+            - rpc
+        volumes:
+            - socket:${SOCKET_DIR}
+            - ./nginx/certs:/var/www/certs:ro
+            - ./node/public:/var/www/public
+            - ./node/resources:/var/www/resources
+            - ./node/routes:/var/www/routes
+            - ./node/store:/var/www/store
+            - ./node/web.js:/var/www/web.js
+
+    redis:
+        build:
+            args:
+                REDIS_MAXMEMORY: 3072mb
+                REDIS_PASSWORD: ${REDIS_PASSWORD}
+                REDIS_PORT: 6380
+                REDIS_SOCKET: ${REDIS_SOCKET}
+                SOCKET_DIR: ${SOCKET_DIR}
+            context: ./redis
+        container_name: redis
+        networks:
+            - application
+        restart: unless-stopped
+        sysctls:
+            net.core.somaxconn: 512
+        volumes:
+            - redis:/data
+            - socket:${SOCKET_DIR}
+
+version: '3.8'
+
+volumes:
+    dash:
+    redis:
+    socket:
