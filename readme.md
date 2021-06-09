@@ -8,17 +8,17 @@
 * [Docker Compose](https://docs.docker.com/compose/install/) (v1.25.0+)
 
 ### Step 1
-```bash
-$ git clone -b master https://github.com/ICJR/dash-payment.git
-$ cd dash-payment
+```console
+git clone -b master https://github.com/ICJR/dash-payment.git
+cd dash-payment
 ```
 
 ### Step 2
 Update `.env.example` and rename to `.env`
 
 ### Step 3
-```bash
-$ docker-compose --env-file ./.env up -d
+```console
+docker-compose --env-file ./.env up -d
 ```
 
 ### Step 4
