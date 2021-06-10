@@ -9,7 +9,7 @@
 
 ### Step 1
 ```console
-git clone -b master https://github.com/ICJR/dash-payment.git
+git clone -b master https://github.com/dash-incubator/payment-server.git
 cd dash-payment
 ```
 
