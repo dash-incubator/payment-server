@@ -9,8 +9,8 @@
 
 ### Step 1
 ```console
-git clone -b master https://github.com/dash-incubator/payment-server.git
-cd dash-payment
+git clone -b main https://github.com/dash-incubator/payment-server.git
+cd payment-server
 ```
 
 ### Step 2
