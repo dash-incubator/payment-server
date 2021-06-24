@@ -51,6 +51,8 @@ services:
                 ROOT_DIRECTORY: ${ROOT_DIRECTORY}
             context: ./node
         command: node web.js
+        depends_on:
+            - redis
         environment:
             - DASH_CONTRACT_ID
             - DASH_IDENTITY
@@ -58,7 +60,7 @@ services:
             - DOMAIN
             - NODE_PORT
             - REDIS_PASSWORD
-            - REDIS_SOCKET 
+            - REDIS_SOCKET
         restart: unless-stopped
         ports:
             - 8080:8080

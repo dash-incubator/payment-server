@@ -46,34 +46,39 @@ load(path.join(__dirname, 'routes'));
 
 
 // Setup Dash Platform Information
-(async () => {
-    let mnemonic = process.env.DASH_MNEMONIC;
+async function setup() {
+    let contract = process.env.DASH_CONTRACT_ID || null,
+        identity = process.env.DASH_IDENTITY || null,
+        mnemonic = process.env.DASH_MNEMONIC || null,
+        wallet = await register.wallet(mnemonic);
 
-    if (!mnemonic) {
-        let wallet = await register.wallet();
+    mnemonic = wallet.mnemonic;
+    process.env.DASH_MNEMONIC = mnemonic;
 
-        console.log(wallet);
+    if (wallet.balance.confirmed > 0) {
+        if (!identity) {
+            identity = await register.identity(mnemonic);
+            process.env.DASH_IDENTITY = identity;
+        }
 
-        mnemonic = wallet.mnemonic;
-        process.env.DASH_MNEMONIC = mnemonic;
+        if (!contract && identity) {
+            contract = await register.contract(identity, mnemonic);
+            process.env.DASH_CONTRACT_ID = contract['$id'];
+        }
     }
 
-    if (!process.env.DASH_IDENTITY) {
-        let identity = await register.identity(mnemonic);
+    console.log({
+        contract: process.env.DASH_CONTRACT_ID,
+        identity: process.env.DASH_IDENTITY,
+        wallet
+    });
 
-        console.log({ identity });
-
-        let contract = await register.contract(identity, mnemonic);
-
-        process.env.DASH_IDENTITY = identity;
-        process.env.DASH_CONTRACT_ID = contract['$id'];
-
-        console.log({
-            identity: process.env.DASH_IDENTITY,
-            contract: process.env.DASH_CONTRACT_ID
-        });
+    if (!contract || !identity) {
+        setTimeout(setup, (60 * 1000));
     }
-})();
+}
+
+setup();
 
 
 app.listen(config.port, config.host);
